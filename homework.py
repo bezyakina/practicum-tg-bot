@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig(
     format="Date-Time : %(asctime)s : Line No. : %(lineno)d " "- %(message)s",
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 
 PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
@@ -35,7 +35,6 @@ def parse_homework_status(homework):
 
 def get_homework_statuses(current_timestamp):
     headers = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
-    logging.debug(f"Получили токен: {PRACTICUM_TOKEN}")
     params = {"from_date": current_timestamp}
     try:
         homework_statuses = requests.get(
