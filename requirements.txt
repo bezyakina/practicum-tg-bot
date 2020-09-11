@@ -5,6 +5,7 @@ cryptography==2.9.2
 decorator==4.4.2
 future==0.18.2
 idna==2.9
+pytest==6.0.1
 pycparser==2.20
 PySocks==1.7.1
 python-dotenv==0.13.0

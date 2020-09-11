@@ -21,3 +21,7 @@ posts/static/
 media/
 
 db.sqlite3
+
+.env
+
+*.log
