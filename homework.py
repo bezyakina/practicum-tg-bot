@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig(
     format="Date-Time : %(asctime)s : Line No. : %(lineno)d " "- %(message)s",
-    level=logging.INFO,
+    level=logging.DEBUG,
 )
 
 PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
@@ -35,6 +35,7 @@ def parse_homework_status(homework):
 
 def get_homework_statuses(current_timestamp):
     headers = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
+    logging.debug(f"Получили токен: {PRACTICUM_TOKEN}")
     params = {"from_date": current_timestamp}
     try:
         homework_statuses = requests.get(
@@ -70,7 +71,7 @@ def main():
             current_timestamp = new_homework.get(
                 "current_date"
             )  # обновить timestamp
-            time.sleep(1200)  # опрашивать раз в пять минут
+            time.sleep(1200)  # опрашивать раз в двадцать минут
 
         except Exception as e:
             logging.error(f"Бот упал с ошибкой: {e}")
