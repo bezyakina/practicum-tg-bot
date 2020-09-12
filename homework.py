@@ -1,16 +1,34 @@
 import logging
 import os
+import sys
 import time
+from logging import handlers
 
 import requests
 import telegram
 from dotenv import load_dotenv
 
 load_dotenv()
-logging.basicConfig(
-    format="Date-Time : %(asctime)s : Line No. : %(lineno)d " "- %(message)s",
-    level=logging.INFO,
+
+
+LOGFILE = os.getenv("LOGFILE")
+
+log = logging.getLogger("")
+log.setLevel(logging.DEBUG)
+log_format = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setFormatter(log_format)
+log.addHandler(ch)
+
+fh = handlers.RotatingFileHandler(
+    LOGFILE, maxBytes=(1048576 * 5), backupCount=7
+)
+fh.setFormatter(log_format)
+log.addHandler(fh)
+
 
 PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -25,7 +43,7 @@ bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
 def parse_homework_status(homework):
     if "homework_name" and "status" not in homework.keys():
-        logging.error("Произошла ошибка при запросе")
+        log.error("Произошла ошибка при запросе")
         return (
             f"Произошла ошибка при запросе к API практикума, повторный "
             f"запрос через {int(BOT_TIME_SLEEP) // 60} минут"
@@ -41,10 +59,10 @@ def parse_homework_status(homework):
     }
 
     if homework_status not in homework_statuses.keys():
-        logging.error("Неизвестный статус домашнего задания")
+        log.error("Неизвестный статус домашнего задания")
         return "Неизвестный статус домашнего задания"
 
-    logging.info(f"Получен статус домашней работы - {homework_status}")
+    log.info(f"Получен статус домашней работы - {homework_status}")
     verdict = homework_statuses[homework_status]
 
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
@@ -54,7 +72,7 @@ def get_homework_statuses(current_timestamp):
     headers = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 
     if not isinstance(current_timestamp, (int, str)):
-        logging.error(
+        log.error(
             "Полученый current_timestamp должен имметь тип int или " "str"
         )
         print("Полученый current_timestamp должен имметь тип int или str")
@@ -67,21 +85,17 @@ def get_homework_statuses(current_timestamp):
             headers=headers,
             params=params,
         )
-        logging.info("Получен ответ от API практикума")
+        log.info("Получен ответ от API практикума")
         return homework_statuses.json()
 
-    except requests.exceptions.HTTPError as errh:
-        logging.error("Http Error: ", errh)
-        print("Http Error: ", errh)
-    except requests.exceptions.ConnectionError as errc:
-        logging.error("Error Connecting: ", errc)
-        print("Error Connecting: ", errc)
-    except requests.exceptions.Timeout as errt:
-        logging.error("Timeout Error: ", errt)
-        print("Timeout Error: ", errt)
-    except requests.exceptions.RequestException as err:
-        logging.error("OOps: Something Else ", err)
-        print("Не удалось получить ответ от API практикума, ошибка ", err)
+    except (
+        requests.exceptions.HTTPError,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        requests.exceptions.RequestException,
+    ) as e:
+        log.error(f"Не удалось получить ответ от API практикума, ошибка: {e}")
+        print(f"Не удалось получить ответ от API практикума, ошибка: {e}")
 
 
 def send_message(message):
@@ -89,7 +103,7 @@ def send_message(message):
 
 
 def main():
-    logging.info("Started")
+    log.info("Started")
     current_timestamp = int(time.time())
 
     while True:
@@ -100,17 +114,17 @@ def main():
                 send_message(
                     parse_homework_status(new_homework.get("homeworks")[0])
                 )
-                logging.info("Сообщение было успешно отправлено в telegram")
+                log.info("Сообщение было успешно отправлено в telegram")
 
             current_timestamp = new_homework.get("current_date")
             time.sleep(int(BOT_TIME_SLEEP))
 
         except Exception as e:
-            logging.error(f"Бот упал с ошибкой: {e}")
+            log.error(f"Бот упал с ошибкой: {e}")
             time.sleep(5)
             continue
 
-    logging.info("Finished")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
